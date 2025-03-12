@@ -1,0 +1,84 @@
+# Helpdesk User Management Tool
+# Erstellt von: João Zamba
+# Beschreibung: Dieses Skript ermöglicht Helpdesk-Mitarbeitern die Verwaltung von Benutzern in einer Active Directory-Domäne.
+
+# Import Active Directory Modul
+Import-Module ActiveDirectory
+
+Write-Host "[INFO] Helpdesk User Management gestartet..." -ForegroundColor Cyan
+
+# Funktion: Neuen Benutzer erstellen
+function New-ADUserAccount {
+    param (
+        [string]$SamAccountName,
+        [string]$DisplayName,
+        [string]$OU,
+        [string]$Password
+    )
+    New-ADUser -SamAccountName $SamAccountName -UserPrincipalName "$SamAccountName@domain.com" -Name $DisplayName -GivenName $DisplayName -Surname " " -Enabled $true -Path $OU -AccountPassword (ConvertTo-SecureString $Password -AsPlainText -Force) -ChangePasswordAtLogon $true
+    Write-Host "[OK] Benutzer '$DisplayName' wurde erfolgreich erstellt." -ForegroundColor Green
+}
+
+# Funktion: Passwort zurücksetzen
+function Reset-UserPassword {
+    param (
+        [string]$SamAccountName,
+        [string]$NewPassword
+    )
+    Set-ADAccountPassword -Identity $SamAccountName -NewPassword (ConvertTo-SecureString $NewPassword -AsPlainText -Force) -Reset
+    Write-Host "[OK] Passwort für '$SamAccountName' wurde zurückgesetzt." -ForegroundColor Green
+}
+
+# Funktion: Benutzer sperren
+function Lock-UserAccount {
+    param (
+        [string]$SamAccountName
+    )
+    Disable-ADAccount -Identity $SamAccountName
+    Write-Host "[OK] Benutzer '$SamAccountName' wurde gesperrt." -ForegroundColor Red
+}
+
+# Funktion: Benutzer entsperren
+function Unlock-UserAccount {
+    param (
+        [string]$SamAccountName
+    )
+    Enable-ADAccount -Identity $SamAccountName
+    Write-Host "[OK] Benutzer '$SamAccountName' wurde entsperrt." -ForegroundColor Green
+}
+
+# Menü für Benutzeraktionen
+Write-Host "Wähle eine Aktion: " -ForegroundColor Yellow
+Write-Host "1 - Neuen Benutzer erstellen"
+Write-Host "2 - Passwort zurücksetzen"
+Write-Host "3 - Benutzer sperren"
+Write-Host "4 - Benutzer entsperren"
+$option = Read-Host "Gib die Nummer der gewünschten Aktion ein"
+
+switch ($option) {
+    "1" {
+        $SamAccountName = Read-Host "Gib den SamAccountName ein"
+        $DisplayName = Read-Host "Gib den vollständigen Namen ein"
+        $OU = Read-Host "Gib die OU ein (z.B. 'OU=Mitarbeiter,DC=domain,DC=com')"
+        $Password = Read-Host "Gib das Standardpasswort ein"
+        New-ADUserAccount -SamAccountName $SamAccountName -DisplayName $DisplayName -OU $OU -Password $Password
+    }
+    "2" {
+        $SamAccountName = Read-Host "Gib den SamAccountName ein"
+        $NewPassword = Read-Host "Gib das neue Passwort ein"
+        Reset-UserPassword -SamAccountName $SamAccountName -NewPassword $NewPassword
+    }
+    "3" {
+        $SamAccountName = Read-Host "Gib den SamAccountName ein"
+        Lock-UserAccount -SamAccountName $SamAccountName
+    }
+    "4" {
+        $SamAccountName = Read-Host "Gib den SamAccountName ein"
+        Unlock-UserAccount -SamAccountName $SamAccountName
+    }
+    default {
+        Write-Host "Ungültige Auswahl!" -ForegroundColor Red
+    }
+}
+
+Write-Host "[INFO] Vorgang abgeschlossen." -ForegroundColor Cyan
