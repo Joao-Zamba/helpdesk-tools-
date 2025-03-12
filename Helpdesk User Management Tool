@@ -47,12 +47,34 @@ function Unlock-UserAccount {
     Write-Host "[OK] Benutzer '$SamAccountName' wurde entsperrt." -ForegroundColor Green
 }
 
+# Funktion: Benutzer zu einer Gruppe hinzufügen
+function Add-UserToGroup {
+    param (
+        [string]$SamAccountName,
+        [string]$GroupName
+    )
+    Add-ADGroupMember -Identity $GroupName -Members $SamAccountName
+    Write-Host "[OK] Benutzer '$SamAccountName' wurde zur Gruppe '$GroupName' hinzugefügt." -ForegroundColor Green
+}
+
+# Funktion: Benutzer aus einer Gruppe entfernen
+function Remove-UserFromGroup {
+    param (
+        [string]$SamAccountName,
+        [string]$GroupName
+    )
+    Remove-ADGroupMember -Identity $GroupName -Members $SamAccountName -Confirm:$false
+    Write-Host "[OK] Benutzer '$SamAccountName' wurde aus der Gruppe '$GroupName' entfernt." -ForegroundColor Green
+}
+
 # Menü für Benutzeraktionen
 Write-Host "Wähle eine Aktion: " -ForegroundColor Yellow
 Write-Host "1 - Neuen Benutzer erstellen"
 Write-Host "2 - Passwort zurücksetzen"
 Write-Host "3 - Benutzer sperren"
 Write-Host "4 - Benutzer entsperren"
+Write-Host "5 - Benutzer zu einer Gruppe hinzufügen"
+Write-Host "6 - Benutzer aus einer Gruppe entfernen"
 $option = Read-Host "Gib die Nummer der gewünschten Aktion ein"
 
 switch ($option) {
@@ -75,6 +97,16 @@ switch ($option) {
     "4" {
         $SamAccountName = Read-Host "Gib den SamAccountName ein"
         Unlock-UserAccount -SamAccountName $SamAccountName
+    }
+    "5" {
+        $SamAccountName = Read-Host "Gib den SamAccountName ein"
+        $GroupName = Read-Host "Gib den Gruppennamen ein"
+        Add-UserToGroup -SamAccountName $SamAccountName -GroupName $GroupName
+    }
+    "6" {
+        $SamAccountName = Read-Host "Gib den SamAccountName ein"
+        $GroupName = Read-Host "Gib den Gruppennamen ein"
+        Remove-UserFromGroup -SamAccountName $SamAccountName -GroupName $GroupName
     }
     default {
         Write-Host "Ungültige Auswahl!" -ForegroundColor Red
